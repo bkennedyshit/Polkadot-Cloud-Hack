@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  reputechain-node:
+    build: .
+    container_name: reputechain-node
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+      - "30333:30333"
+    environment:
+      RUST_LOG: info
+    volumes:
+      - ./data:/data
+    command: reputechain-node --dev --ws-external --rpc-external --base-path /data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: reputechain-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - reputechain-node
+    environment:
+      VITE_API_ENDPOINT: ws://reputechain-node:9944
+
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: reputechain-ipfs
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ./ipfs_data:/data/ipfs
+
+volumes:
+  data:
+  ipfs_data:

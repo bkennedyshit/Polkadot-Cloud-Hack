@@ -1,0 +1,20 @@
+[package]
+name = "reputechain"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["runtime", "node"]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 0
+
+[[bin]]
+name = "reputechain-node"
+path = "node/main.rs"
