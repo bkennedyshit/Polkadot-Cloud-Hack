@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, TrendingUp, Users, Award, Wallet } from 'lucide-react';
 import { getUserStats, connectWallet, createProfile, submitRating } from './api';
 

@@ -13,13 +13,14 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{ConstU128, ConstU32, ConstU64, ConstU8},
+    traits::{ConstBool, ConstU128, ConstU32, ConstU64, ConstU8},
     weights::{
         constants::WEIGHT_REF_TIME_PER_SECOND, IdentityFee, Weight,
     },
 };
 use frame_system::EnsureRoot;
-use pallet_grandpa::AuthorityId as GrandpaId;
+use pallet_grandpa::{AuthorityId as GrandpaId, fg_primitives};
+use sp_consensus_grandpa as fg_primitives;
 
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -211,12 +212,63 @@ pub type Executive = frame_executive::Executive<
     AllPalletsWithSystem,
 >;
 
+pub mod opaque {
+    use super::*;
+    use sp_runtime::{generic, traits::BlakeTwo256};
+
+    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+    pub type BlockId = generic::BlockId<Block>;
+}
+
+#[cfg(feature = "std")]
+pub fn native_version() -> NativeVersion {
+    NativeVersion {
+        runtime_version: VERSION,
+        can_author_with: Default::default(),
+    }
+}
+
+const RUNTIME_API_VERSIONS: sp_version::ApisVec = sp_version::create_apis_vec![
+    [sp_api::Core::<Block>::ID, sp_api::Core::<Block>::VERSION],
+    [sp_api::Metadata::<Block>::ID, sp_api::Metadata::<Block>::VERSION],
+    [sp_block_builder::BlockBuilder::<Block>::ID, sp_block_builder::BlockBuilder::<Block>::VERSION],
+    [sp_transaction_pool::runtime_api::TaggedTransactionQueue::<Block>::ID, sp_transaction_pool::runtime_api::TaggedTransactionQueue::<Block>::VERSION],
+    [sp_offchain::OffchainWorkerApi::<Block>::ID, sp_offchain::OffchainWorkerApi::<Block>::VERSION],
+    [sp_consensus_aura::AuraApi::<Block, AuraId>::ID, sp_consensus_aura::AuraApi::<Block, AuraId>::VERSION],
+    [sp_session::SessionKeys::<Block>::ID, sp_session::SessionKeys::<Block>::VERSION],
+    [fg_primitives::GrandpaApi::<Block>::ID, fg_primitives::GrandpaApi::<Block>::VERSION],
+    [frame_system_rpc_runtime_api::AccountNonceApi::<Block, AccountId, Nonce>::ID, frame_system_rpc_runtime_api::AccountNonceApi::<Block, AccountId, Nonce>::VERSION],
+    [pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi::<Block, Balance>::ID, pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi::<Block, Balance>::VERSION],
+    #[cfg(feature = "runtime-benchmarks")]
+    [frame_benchmarking::Benchmark::<Block>::ID, frame_benchmarking::Benchmark::<Block>::VERSION],
+    #[cfg(feature = "try-runtime")]
+    [frame_try_runtime::TryRuntime::<Block>::ID, frame_try_runtime::TryRuntime::<Block>::VERSION],
+];
+
+#[cfg(feature = "std")]
+pub fn wasm_binary_unwrap() -> &'static [u8] {
+    WASM_BINARY.expect(
+        "Development wasm binary is not available. This means the client is built with \
+         `SKIP_WASM_BUILD` flag and it is only usable for production chains. Please rebuild with \
+         the flag disabled.",
+    )
+}
+
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
 impl_opaque_keys! {
     pub struct SessionKeys {
         pub aura: Aura,
         pub grandpa: Grandpa,
     }
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
@@ -381,7 +433,9 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
 
             let mut list = Vec::<BenchmarkList>::new();
-            list_benchmarks!(list, extra);
+            list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+            list_benchmark!(list, extra, pallet_balances, Balances);
+            list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 
             let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -404,7 +458,9 @@ impl_runtime_apis! {
 
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
-            add_benchmarks!(params, batches);
+            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+            add_benchmark!(params, batches, pallet_balances, Balances);
+            add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 
             Ok(batches)
         }

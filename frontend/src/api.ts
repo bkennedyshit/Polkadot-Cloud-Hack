@@ -175,7 +175,7 @@ export async function getUserStats(address: string): Promise<UserStats> {
   };
 }
 
-export async function getTopUsers(limit: number = 10): Promise<UserStats[]> {
+export async function getTopUsers(_limit: number = 10): Promise<UserStats[]> {
   // This would need to be implemented with a more sophisticated query
   // For now, returning empty array - would need indexing service in production
   return [];

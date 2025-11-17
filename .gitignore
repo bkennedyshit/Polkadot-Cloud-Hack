@@ -1,43 +1,37 @@
-# Rust
-/target
-Cargo.lock
-**/*.rs.bk
-*.pdb
-
-# Node
+# Build outputs
+target/
 node_modules/
 dist/
 build/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+
+# OS
 .DS_Store
+Thumbs.db
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Logs
+*.log
+npm-debug.log*
 
-# Build artifacts
-*.wasm
-*.wasm.map
+# Submission files (internal use only)
+DEVPOST_ANSWERS.md
+SUBMIT_CHECKLIST.md
+VIDEO_SCRIPT.md
+FINAL_INSTRUCTIONS.md
+SUBMIT_NOW.md
+SUBMISSION_READY.md
+*.zip
 
-# Docker
-.dockerignore
-docker-compose.override.yml
-
-# Data
-/data
-/ipfs_data
-
-# Misc
-.cache/
-.tmp/
+# Cargo
+Cargo.lock
+**/*.rs.bk
